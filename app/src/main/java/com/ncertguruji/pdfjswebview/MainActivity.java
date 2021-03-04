@@ -5,21 +5,36 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.view.Display;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
+
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 
 
 public class MainActivity extends AppCompatActivity {
 
+    private FrameLayout adContainerView;
+    private AdView adView;
     private WebView mWebview ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mWebview  = new WebView(this);
+        setContentView(R.layout.activity_main);
+//        mWebview  = new WebView(this);
+        mWebview  = this.findViewById(R.id.mWebView);
 
         //-----Mobile site loading start ----
         mWebview.getSettings().setJavaScriptEnabled(true);
@@ -61,6 +76,48 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mWebview .loadUrl("http://www.ncertguruji.in");
-        setContentView(mWebview );
+//        setContentView(mWebview );
+
+
+        MobileAds.initialize(MainActivity.this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+                //get the reference to your FrameLayout
+                adContainerView = findViewById(R.id.adView_container);
+
+                //Create an AdView and put it into your FrameLayout
+                adView = new AdView(MainActivity.this);
+                adContainerView.addView(adView);
+                adView.setAdUnitId("ca-app-pub-3940256099942544/6300978111");
+                loadBanner();
+            }
+        });
+
+    }
+    private AdSize getAdSize() {
+        //Determine the screen width to use for the ad width.
+        Display display = getWindowManager().getDefaultDisplay();
+        DisplayMetrics outMetrics = new DisplayMetrics();
+        display.getMetrics(outMetrics);
+
+        float widthPixels = outMetrics.widthPixels;
+        float density = outMetrics.density;
+
+        //you can also pass your selected width here in dp
+        int adWidth = (int) (widthPixels / density);
+
+        //return the optimal size depends on your orientation (landscape or portrait)
+        return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth);
+    }
+
+    private void loadBanner() {
+        AdRequest adRequest = new AdRequest.Builder().build();
+
+        AdSize adSize = getAdSize();
+        // Set the adaptive ad size to the ad view.
+        adView.setAdSize(adSize);
+
+        // Start loading the ad in the background.
+        adView.loadAd(adRequest);
     }
 }
